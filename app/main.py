@@ -11,7 +11,7 @@ app = FastAPI()
 @app.get("/api/config/keycloak")
 async def get_keycloak_config() -> KeycloakConfig:
     return KeycloakConfig(
-        client_id=config.KEYCLOAK_CLIENT_ID,
+        clientId=config.KEYCLOAK_CLIENT_ID,
         realm=config.KEYCLOAK_REALM,
         url=config.KEYCLOAK_URL,
     )
