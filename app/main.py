@@ -1,15 +1,10 @@
 from typing import Union
 
 from fastapi import FastAPI
-from app.config import config
-from app.models.config import KeycloakConfig
+from config import config
+from models.config import KeycloakConfig
 
 app = FastAPI()
-
-
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
 
 
 @app.get("/config/keycloak")
