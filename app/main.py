@@ -1,10 +1,11 @@
 from typing import Union
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from config import config
 from models.config import KeycloakConfig
 from models.health import HealthCheck
+from utils import get_async_client
 import httpx
 
 app = FastAPI()
@@ -31,10 +32,13 @@ async def get_keycloak_config() -> KeycloakConfig:
 
 
 @app.get("/api/areas/")
-async def get_areas() -> Union[dict, list]:
+async def get_areas(
+    client: httpx.AsyncClient = Depends(get_async_client),
+) -> Union[dict, list]:
     # Fetch data from config.SOIL_API_URL/v1/areas/ and relay back to client
 
-    res = await httpx.get(config.SOIL_API_URL + "/v1/areas/")
+    res = await client.get(config.SOIL_API_URL + "/v1/areas/")
+
     return res.json()
 
 
