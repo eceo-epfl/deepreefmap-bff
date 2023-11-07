@@ -26,19 +26,20 @@ router = APIRouter()
 
 
 @router.get("")
-async def get_areas(
+async def get_sensors(
     client: httpx.AsyncClient = Depends(get_async_client),
     *,
-    response: Response,
     sort: list[str] | None = None,
     range: list[int] | None = None,
-    filter: dict[str, str] | None = None,
+    filter: str | None = None,
+    response: Response,
 ) -> Any:
-    # Fetch data from config.SOIL_API_URL/v1/areas/ and relay back to client
     res = await client.get(
-        f"{config.SOIL_API_URL}/v1/areas",
+        f"{config.SOIL_API_URL}/v1/sensors",
         params={"sort": sort, "range": range, "filter": filter},
     )
+    print(res.headers["Content-Range"])
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
     response.headers["Content-Range"] = res.headers["Content-Range"]
+
     return res.json()

@@ -6,6 +6,7 @@ from app.config import config
 from app.models.config import KeycloakConfig
 from app.models.health import HealthCheck
 from app.areas import router as areas_router
+from app.sensors import router as sensors_router
 from app.utils import get_async_client
 import httpx
 
@@ -57,4 +58,9 @@ app.include_router(
     areas_router,
     prefix=f"{config.API_PREFIX}/areas",
     tags=["areas"],
+)
+app.include_router(
+    sensors_router,
+    prefix=f"{config.API_PREFIX}/sensors",
+    tags=["sensors"],
 )
