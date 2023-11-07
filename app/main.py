@@ -1,11 +1,24 @@
 from typing import Union
 
 from fastapi import FastAPI, status
+from fastapi.middleware.cors import CORSMiddleware
 from config import config
 from models.config import KeycloakConfig
 from models.health import HealthCheck
+import httpx
 
 app = FastAPI()
+
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/api/config/keycloak")
@@ -15,6 +28,14 @@ async def get_keycloak_config() -> KeycloakConfig:
         realm=config.KEYCLOAK_REALM,
         url=config.KEYCLOAK_URL,
     )
+
+
+@app.get("/api/areas/")
+async def get_areas() -> Union[dict, list]:
+    # Fetch data from config.SOIL_API_URL/v1/areas/ and relay back to client
+
+    res = await httpx.get(config.SOIL_API_URL + "/v1/areas/")
+    return res.json()
 
 
 @app.get(
