@@ -2,10 +2,11 @@ from typing import Union
 
 from fastapi import FastAPI, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from config import config
-from models.config import KeycloakConfig
-from models.health import HealthCheck
-from utils import get_async_client
+from app.config import config
+from app.models.config import KeycloakConfig
+from app.models.health import HealthCheck
+from app.areas import router as areas_router
+from app.utils import get_async_client
 import httpx
 
 app = FastAPI()
@@ -22,24 +23,13 @@ app.add_middleware(
 )
 
 
-@app.get("/api/config/keycloak")
+@app.get(f"{config.API_PREFIX}/config/keycloak")
 async def get_keycloak_config() -> KeycloakConfig:
     return KeycloakConfig(
         clientId=config.KEYCLOAK_CLIENT_ID,
         realm=config.KEYCLOAK_REALM,
         url=config.KEYCLOAK_URL,
     )
-
-
-@app.get("/api/areas/")
-async def get_areas(
-    client: httpx.AsyncClient = Depends(get_async_client),
-) -> Union[dict, list]:
-    # Fetch data from config.SOIL_API_URL/v1/areas/ and relay back to client
-
-    res = await client.get(config.SOIL_API_URL + "/v1/areas/")
-
-    return res.json()
 
 
 @app.get(
@@ -61,3 +51,10 @@ def get_health() -> HealthCheck:
         HealthCheck: Returns a JSON response with the health status
     """
     return HealthCheck(status="OK")
+
+
+app.include_router(
+    areas_router,
+    prefix=f"{config.API_PREFIX}/areas",
+    tags=["areas"],
+)

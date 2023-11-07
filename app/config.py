@@ -3,6 +3,9 @@ from functools import lru_cache
 
 
 class Config(BaseSettings):
+    API_PREFIX: str = "/api"
+
+    # Keycloak settings
     KEYCLOAK_CLIENT_ID: str
     KEYCLOAK_REALM: str
     KEYCLOAK_URL: str
