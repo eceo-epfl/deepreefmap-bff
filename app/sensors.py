@@ -8,37 +8,33 @@ from uuid import UUID
 router = APIRouter()
 
 
-# @router.get("/{area_id}")
-# async def get_area(
-#     client: httpx.AsyncClient = Depends(get_async_client),
-#     *,
-#     area_id: UUID,
-#     sort: list[str] | None = None,
-#     range: list[int] | None = None,
-#     filter: dict[str, str] | None = None,
-# ) -> Any:
-#     res = await client.get(
-#         f"{config.SOIL_API_URL}/v1/areas/{area_id}",
-#         params={"sort": sort, "range": range, "filter": filter},
-#     )
+@router.get("/{sensor_id}")
+async def get_sensor(
+    client: httpx.AsyncClient = Depends(get_async_client),
+    *,
+    sensor_id: UUID,
+) -> Any:
+    res = await client.get(
+        f"{config.SOIL_API_URL}/v1/sensors/{sensor_id}",
+    )
 
-#     return res.json()
+    return res.json()
 
 
 @router.get("")
 async def get_sensors(
-    client: httpx.AsyncClient = Depends(get_async_client),
-    *,
-    sort: list[str] | None = None,
-    range: list[int] | None = None,
-    filter: str | None = None,
     response: Response,
+    *,
+    filter: str = Query(None),
+    sort: str = Query(None),
+    range: str = Query(None),
+    client: httpx.AsyncClient = Depends(get_async_client),
 ) -> Any:
+    print("sort", sort, "range", range, "filter", filter)
     res = await client.get(
         f"{config.SOIL_API_URL}/v1/sensors",
         params={"sort": sort, "range": range, "filter": filter},
     )
-    print(res.headers["Content-Range"])
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
     response.headers["Content-Range"] = res.headers["Content-Range"]
 
