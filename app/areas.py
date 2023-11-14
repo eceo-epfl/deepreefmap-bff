@@ -9,23 +9,6 @@ from pydantic.types import Json
 router = APIRouter()
 
 
-# @router.get("/{area_id}")
-# async def get_area(
-#     client: httpx.AsyncClient = Depends(get_async_client),
-#     *,
-#     area_id: UUID,
-#     sort: list[str] | None = None,
-#     range: list[int] | None = None,
-#     filter: dict[str, str] | None = None,
-# ) -> Any:
-#     res = await client.get(
-#         f"{config.SOIL_API_URL}/v1/areas/{area_id}",
-#         params={"sort": sort, "range": range, "filter": filter},
-#     )
-
-#     return res.json()
-
-
 @router.get("/{area_id}")
 async def get_area(
     client: httpx.AsyncClient = Depends(get_async_client),
@@ -49,7 +32,7 @@ async def get_areas(
     client: httpx.AsyncClient = Depends(get_async_client),
 ) -> Any:
     # Fetch data from config.SOIL_API_URL/v1/areas/ and relay back to client
-    print("sort", sort, "range", range, "filter", filter)
+
     res = await client.get(
         f"{config.SOIL_API_URL}/v1/areas",
         params={"sort": sort, "range": range, "filter": filter},
@@ -57,4 +40,43 @@ async def get_areas(
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
     response.headers["Content-Range"] = res.headers["Content-Range"]
     print(res)
+    return res.json()
+
+
+@router.post("")
+async def create_area(
+    area: Any = Body(...),
+    client: httpx.AsyncClient = Depends(get_async_client),
+) -> Any:
+    """Creates an area"""
+    print(area)
+    res = await client.post(
+        f"{config.SOIL_API_URL}/v1/areas",
+        json=area,
+    )
+
+    return res.json()
+
+
+@router.put("/{area_id}")
+async def update_area(
+    area_id: UUID,
+    area: Any = Body(...),
+    client: httpx.AsyncClient = Depends(get_async_client),
+) -> Any:
+    res = await client.put(
+        f"{config.SOIL_API_URL}/v1/areas/{area_id}", json=area
+    )
+
+    return res.json()
+
+
+@router.delete("/{area_id}")
+async def delete_area(
+    area_id: UUID,
+    client: httpx.AsyncClient = Depends(get_async_client),
+) -> None:
+    """Delete an area by id"""
+    res = await client.delete(f"{config.SOIL_API_URL}/v1/areas/{area_id}")
+
     return res.json()
