@@ -70,7 +70,7 @@ async def get_user_info(payload: dict = Depends(get_payload)) -> User:
 
 
 async def require_admin(user: User = Depends(get_user_info)):
-    if "admin" in user.realm_roles:
+    if "admin" not in user.realm_roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorised to perform this operation",

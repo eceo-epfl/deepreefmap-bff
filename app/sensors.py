@@ -53,7 +53,7 @@ async def create_sensor(
     user: User = Depends(require_admin),
 ) -> Any:
     """Creates an sensor"""
-    print(sensor)
+
     res = await client.post(
         f"{config.SOIL_API_URL}/v1/sensors",
         json=sensor,
