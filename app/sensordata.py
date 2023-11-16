@@ -1,9 +1,11 @@
-from typing import Union, Any
+from typing import Any
 from fastapi import Depends, APIRouter, Query, Response, Body
 from app.config import config
 from app.utils import get_async_client
 import httpx
 from uuid import UUID
+from app.models.user import User
+from app.auth import require_admin
 
 router = APIRouter()
 
@@ -48,6 +50,7 @@ async def get_all_sensordata(
 async def create_sensordata(
     sensordata: Any = Body(...),
     client: httpx.AsyncClient = Depends(get_async_client),
+    user: User = Depends(require_admin),
 ) -> Any:
     """Creates an sensordata record"""
 
@@ -64,6 +67,7 @@ async def update_sensordata(
     sensordata_id: UUID,
     sensordata: Any = Body(...),
     client: httpx.AsyncClient = Depends(get_async_client),
+    user: User = Depends(require_admin),
 ) -> Any:
     """Updates an individual sensordata record by id"""
 
@@ -79,6 +83,7 @@ async def update_sensordata(
 async def delete_sensor(
     sensordata_id: UUID,
     client: httpx.AsyncClient = Depends(get_async_client),
+    user: User = Depends(require_admin),
 ) -> None:
     """Delete an individual sensordata record by id"""
 

@@ -1,6 +1,4 @@
-from typing import Union
-
-from fastapi import FastAPI, status, Depends
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import config
 from app.models.config import KeycloakConfig
@@ -8,8 +6,6 @@ from app.models.health import HealthCheck
 from app.areas import router as areas_router
 from app.sensors import router as sensors_router
 from app.sensordata import router as sensordata_router
-from app.utils import get_async_client
-import httpx
 
 app = FastAPI()
 
@@ -43,14 +39,9 @@ async def get_keycloak_config() -> KeycloakConfig:
     response_model=HealthCheck,
 )
 def get_health() -> HealthCheck:
-    """
-    ## Perform a Health Check
-    Endpoint to perform a healthcheck on. This endpoint can primarily be used Docker
-    to ensure a robust container orchestration and management is in place. Other
-    services which rely on proper functioning of the API service will not deploy if this
-    endpoint returns any other HTTP status code except 200 (OK).
-    Returns:
-        HealthCheck: Returns a JSON response with the health status
+    """Perform a Health Check
+
+    Useful for Kubernetes to check liveness and readiness probes
     """
     return HealthCheck(status="OK")
 

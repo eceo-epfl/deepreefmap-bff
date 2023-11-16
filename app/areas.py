@@ -1,9 +1,11 @@
-from typing import Union, Any
-from fastapi import Depends, APIRouter, Query, Response, Body, Request
+from typing import Any
+from fastapi import Depends, APIRouter, Response, Body, Request
 from app.config import config
 from app.utils import get_async_client
 import httpx
 from uuid import UUID
+from app.models.user import User
+from app.auth import require_admin
 
 router = APIRouter()
 
@@ -48,6 +50,7 @@ async def get_areas(
 async def create_area(
     area: Any = Body(...),
     client: httpx.AsyncClient = Depends(get_async_client),
+    user: User = Depends(require_admin),
 ) -> Any:
     """Creates an area"""
 
@@ -64,6 +67,7 @@ async def update_area(
     area_id: UUID,
     area: Any = Body(...),
     client: httpx.AsyncClient = Depends(get_async_client),
+    user: User = Depends(require_admin),
 ) -> Any:
     """ "Updates an area by id"""
 
@@ -78,6 +82,7 @@ async def update_area(
 async def delete_area(
     area_id: UUID,
     client: httpx.AsyncClient = Depends(get_async_client),
+    user: User = Depends(require_admin),
 ) -> None:
     """Delete an area by id"""
 
