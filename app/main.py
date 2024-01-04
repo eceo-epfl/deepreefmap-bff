@@ -6,6 +6,7 @@ from app.models.health import HealthCheck
 from app.areas import router as areas_router
 from app.sensors import router as sensors_router
 from app.sensordata import router as sensordata_router
+from app.users import router as users_router
 
 app = FastAPI()
 
@@ -60,4 +61,9 @@ app.include_router(
     sensordata_router,
     prefix=f"{config.API_PREFIX}/sensordata",
     tags=["sensordata"],
+)
+app.include_router(
+    users_router,
+    prefix=f"{config.API_PREFIX}/users",
+    tags=["users"],
 )

@@ -6,7 +6,7 @@ from fastapi import HTTPException, Security, Depends, status
 
 # This is used for fastapi docs authentification
 oauth2_scheme = OAuth2AuthorizationCodeBearer(
-    authorizationUrl=f"{config.KEYCLOAK_URL}",  # https://sso.example.com/auth/
+    authorizationUrl=f"{config.KEYCLOAK_URL}",
     tokenUrl=(
         f"{config.KEYCLOAK_URL}/realms/{config.KEYCLOAK_REALM}"
         "/protocol/openid-connect/token"
@@ -15,7 +15,8 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
 
 keycloak_openid = KeycloakOpenID(
     server_url=config.KEYCLOAK_URL,
-    client_id=config.KEYCLOAK_CLIENT_ID,
+    client_id=config.KEYCLOAK_BFF_ID,
+    client_secret_key=config.KEYCLOAK_BFF_SECRET,
     realm_name=config.KEYCLOAK_REALM,
     verify=True,
 )

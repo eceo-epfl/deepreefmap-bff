@@ -62,6 +62,22 @@ async def create_sensor(
     return res.json()
 
 
+@router.post("")
+async def create_many_sensors(
+    sensor: Any = Body(...),
+    client: httpx.AsyncClient = Depends(get_async_client),
+    user: User = Depends(require_admin),
+) -> Any:
+    """Creates an sensor"""
+
+    res = await client.post(
+        f"{config.SOIL_API_URL}/v1/sensors/many",
+        json=sensor,
+    )
+
+    return res.json()
+
+
 @router.put("/{sensor_id}")
 async def update_sensor(
     sensor_id: UUID,
