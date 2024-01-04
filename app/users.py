@@ -26,7 +26,7 @@ def get_keycloak_admin():
     return KeycloakAdmin(connection=keycloak_connection)
 
 
-@router.get("/")
+@router.get("")
 async def get_users(
     response: Response,
     user: User = Depends(require_admin),
