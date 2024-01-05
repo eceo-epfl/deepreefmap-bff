@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "sensormap-bff"
+name = "astroriver-bff"
 version = "0.1.0"
-description = "The backend-for-frontend for sensormap"
+description = "The backend-for-frontend for the astroriver interface"
 authors = ["Evan Thomas <evan.thomas@epfl.ch>"]
 readme = "README.md"
 

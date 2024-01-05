@@ -16,8 +16,8 @@ class Config(BaseSettings):
     # Keycloak UI settings
     KEYCLOAK_CLIENT_ID: str
 
-    # SOIL-API settings
-    SOIL_API_URL: str  # Full path to the Soil API (eg: http://soil-api-dev)
+    # RIVER-API settings
+    RIVER_API_URL: str  # Full path to the Soil API (eg: http://river-api-dev)
 
 
 @lru_cache()

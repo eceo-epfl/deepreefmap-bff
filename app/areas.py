@@ -19,7 +19,7 @@ async def get_area(
     """Get an area by id"""
 
     res = await client.get(
-        f"{config.SOIL_API_URL}/v1/areas/{area_id}",
+        f"{config.RIVER_API_URL}/v1/areas/{area_id}",
     )
 
     return res.json()
@@ -37,7 +37,7 @@ async def get_areas(
 ) -> Any:
     """Get all areas"""
     res = await client.get(
-        f"{config.SOIL_API_URL}/v1/areas",
+        f"{config.RIVER_API_URL}/v1/areas",
         params={"sort": sort, "range": range, "filter": filter},
     )
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
@@ -55,7 +55,7 @@ async def create_area(
     """Creates an area"""
 
     res = await client.post(
-        f"{config.SOIL_API_URL}/v1/areas",
+        f"{config.RIVER_API_URL}/v1/areas",
         json=area,
     )
 
@@ -72,7 +72,7 @@ async def update_area(
     """ "Updates an area by id"""
 
     res = await client.put(
-        f"{config.SOIL_API_URL}/v1/areas/{area_id}", json=area
+        f"{config.RIVER_API_URL}/v1/areas/{area_id}", json=area
     )
 
     return res.json()
@@ -86,6 +86,6 @@ async def delete_area(
 ) -> None:
     """Delete an area by id"""
 
-    res = await client.delete(f"{config.SOIL_API_URL}/v1/areas/{area_id}")
+    res = await client.delete(f"{config.RIVER_API_URL}/v1/areas/{area_id}")
 
     return res.json()

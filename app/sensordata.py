@@ -19,7 +19,7 @@ async def get_sensordata(
     """Get an individual sensordata record by id"""
 
     res = await client.get(
-        f"{config.SOIL_API_URL}/v1/sensors/data/{sensordata_id}",
+        f"{config.RIVER_API_URL}/v1/sensors/data/{sensordata_id}",
     )
 
     return res.json()
@@ -37,7 +37,7 @@ async def get_all_sensordata(
     """Get all sensordata"""
 
     res = await client.get(
-        f"{config.SOIL_API_URL}/v1/sensors/data",
+        f"{config.RIVER_API_URL}/v1/sensors/data",
         params={"sort": sort, "range": range, "filter": filter},
     )
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
@@ -55,7 +55,7 @@ async def create_sensordata(
     """Creates an sensordata record"""
 
     res = await client.post(
-        f"{config.SOIL_API_URL}/v1/sensors/data",
+        f"{config.RIVER_API_URL}/v1/sensors/data",
         json=sensordata,
     )
 
@@ -72,7 +72,7 @@ async def update_sensordata(
     """Updates an individual sensordata record by id"""
 
     res = await client.put(
-        f"{config.SOIL_API_URL}/v1/sensors/data/{sensordata_id}",
+        f"{config.RIVER_API_URL}/v1/sensors/data/{sensordata_id}",
         json=sensordata,
     )
 
@@ -88,7 +88,7 @@ async def delete_sensor(
     """Delete an individual sensordata record by id"""
 
     res = await client.delete(
-        f"{config.SOIL_API_URL}/v1/sensors/data/{sensordata_id}"
+        f"{config.RIVER_API_URL}/v1/sensors/data/{sensordata_id}"
     )
 
     return res.json()

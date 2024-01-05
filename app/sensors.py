@@ -19,7 +19,7 @@ async def get_sensor(
     """Get a sensor by id"""
 
     res = await client.get(
-        f"{config.SOIL_API_URL}/v1/sensors/{sensor_id}",
+        f"{config.RIVER_API_URL}/v1/sensors/{sensor_id}",
     )
 
     return res.json()
@@ -37,7 +37,7 @@ async def get_sensors(
     """Get all sensors"""
 
     res = await client.get(
-        f"{config.SOIL_API_URL}/v1/sensors",
+        f"{config.RIVER_API_URL}/v1/sensors",
         params={"sort": sort, "range": range, "filter": filter},
     )
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
@@ -55,7 +55,7 @@ async def create_sensor(
     """Creates an sensor"""
 
     res = await client.post(
-        f"{config.SOIL_API_URL}/v1/sensors",
+        f"{config.RIVER_API_URL}/v1/sensors",
         json=sensor,
     )
 
@@ -71,7 +71,7 @@ async def create_many_sensors(
     """Creates an sensor"""
 
     res = await client.post(
-        f"{config.SOIL_API_URL}/v1/sensors/many",
+        f"{config.RIVER_API_URL}/v1/sensors/many",
         json=sensor,
     )
 
@@ -88,7 +88,7 @@ async def update_sensor(
     """ "Updates an sensor by id"""
 
     res = await client.put(
-        f"{config.SOIL_API_URL}/v1/sensors/{sensor_id}", json=sensor
+        f"{config.RIVER_API_URL}/v1/sensors/{sensor_id}", json=sensor
     )
 
     return res.json()
@@ -102,6 +102,6 @@ async def delete_sensor(
 ) -> None:
     """Delete an sensor by id"""
 
-    res = await client.delete(f"{config.SOIL_API_URL}/v1/sensors/{sensor_id}")
+    res = await client.delete(f"{config.RIVER_API_URL}/v1/sensors/{sensor_id}")
 
     return res.json()
