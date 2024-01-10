@@ -1,5 +1,5 @@
-# astroriver-bff
-The backend-for-frontend for astroriver
+# deepreefmap-bff
+The backend-for-frontend for DeepReefMap
 
 
 ## Getting started

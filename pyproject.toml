@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "astroriver-bff"
+name = "deepreefmap-bff"
 version = "0.1.0"
-description = "The backend-for-frontend for the astroriver interface"
+description = "The backend-for-frontend for the deepreefmap interface"
 authors = ["Evan Thomas <evan.thomas@epfl.ch>"]
 readme = "README.md"
 

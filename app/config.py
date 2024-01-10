@@ -16,8 +16,8 @@ class Config(BaseSettings):
     # Keycloak UI settings
     KEYCLOAK_CLIENT_ID: str
 
-    # RIVER-API settings
-    RIVER_API_URL: str  # Full path to the Soil API (eg: http://river-api-dev)
+    # ECEO-API settings
+    ECEO_API_URL: str  # Full path to the ECEO API (eg: http://eceo-api-dev)
 
 
 @lru_cache()
