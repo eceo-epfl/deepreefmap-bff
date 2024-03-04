@@ -6,6 +6,7 @@ import httpx
 from uuid import UUID
 from app.models.user import User
 from app.auth import require_admin, get_user_info
+from fastapi import File, UploadFile
 
 router = APIRouter()
 
@@ -38,7 +39,6 @@ async def get_submissions(
 ) -> Any:
     """Get all submissions"""
 
-    print(user)
     res = await client.get(
         f"{config.ECEO_API_URL}/v1/deepreef/submissions",
         params={"sort": sort, "range": range, "filter": filter},
@@ -51,33 +51,26 @@ async def get_submissions(
 
 @router.post("")
 async def create_submission(
-    submission: Any = Body(...),
+    files: list[UploadFile] = File(...),
+    *,
     client: httpx.AsyncClient = Depends(get_async_client),
     admin_user: User = Depends(require_admin),
 ) -> Any:
-    """Creates an submission"""
+    """Creates an submission
+
+    Forwards the file to the API with multipart form data encoding
+    """
+
+    file_streams = []
+    for file in files:
+        # Multiple multipart files can be sent with the same key
+        # https://github.com/encode/httpx/pull/891
+        file_streams.append(("files", (file.filename, file.file)))
 
     res = await client.post(
         f"{config.ECEO_API_URL}/v1/deepreef/submissions",
-        json=submission,
+        files=file_streams,
     )
-
-    return res.json()
-
-
-@router.post("")
-async def create_many_submissions(
-    submission: Any = Body(...),
-    client: httpx.AsyncClient = Depends(get_async_client),
-    admin_user: User = Depends(require_admin),
-) -> Any:
-    """Creates an submission"""
-
-    res = await client.post(
-        f"{config.ECEO_API_URL}/v1/deepreef/submissions/many",
-        json=submission,
-    )
-
     return res.json()
 
 
