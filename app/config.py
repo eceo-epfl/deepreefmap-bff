@@ -17,7 +17,7 @@ class Config(BaseSettings):
     KEYCLOAK_CLIENT_ID: str
 
     # ECEO-API settings
-    ECEO_API_URL: str  # Full path to the ECEO API (eg: http://eceo-api-dev)
+    DEEPREEFMAP_API_URL: str  # Path to API (eg: http://deepreefmap-api-dev)
 
 
 @lru_cache()

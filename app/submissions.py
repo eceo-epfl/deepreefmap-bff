@@ -21,7 +21,7 @@ async def get_submission(
     """Get a submission by id"""
 
     res = await client.get(
-        f"{config.ECEO_API_URL}/v1/deepreef/submissions/{submission_id}",
+        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}",
     )
 
     return res.json()
@@ -40,7 +40,7 @@ async def get_submissions(
     """Get all submissions"""
 
     res = await client.get(
-        f"{config.ECEO_API_URL}/v1/deepreef/submissions",
+        f"{config.DEEPREEFMAP_API_URL}/v1/submissions",
         params={"sort": sort, "range": range, "filter": filter},
     )
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
@@ -68,7 +68,7 @@ async def create_submission(
         file_streams.append(("files", (file.filename, file.file)))
 
     res = await client.post(
-        f"{config.ECEO_API_URL}/v1/deepreef/submissions",
+        f"{config.DEEPREEFMAP_API_URL}/v1/submissions",
         files=file_streams,
     )
     return res.json()
@@ -84,7 +84,7 @@ async def update_submission(
     """ "Updates an submission by id"""
 
     res = await client.put(
-        f"{config.ECEO_API_URL}/v1/deepreef/submissions/{submission_id}",
+        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}",
         json=submission,
     )
 
@@ -100,7 +100,7 @@ async def delete_submission(
     """Delete an submission by id"""
 
     res = await client.delete(
-        f"{config.ECEO_API_URL}/v1/deepreef/submissions/{submission_id}"
+        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}"
     )
 
     return res.json()
