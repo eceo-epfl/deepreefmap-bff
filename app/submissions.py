@@ -42,6 +42,21 @@ async def get_submission(
     return res.json()
 
 
+@router.post("/{submission_id}/execute", response_model=Any)
+async def execute_submission(
+    submission_id: UUID,
+    client: httpx.AsyncClient = Depends(get_async_client),
+    admin_user: User = Depends(require_admin),
+) -> Any:
+    """Execute a submission by id"""
+
+    res = await client.post(
+        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}/execute",
+    )
+
+    return res.json()
+
+
 @router.get("")
 async def get_submissions(
     response: Response,
