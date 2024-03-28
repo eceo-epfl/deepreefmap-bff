@@ -5,6 +5,7 @@ from app.models.config import KeycloakConfig
 from app.models.health import HealthCheck
 from app.submissions import router as submissions_router
 from app.users import router as users_router
+from app.objects import router as objects_router
 
 app = FastAPI()
 
@@ -49,6 +50,11 @@ app.include_router(
     submissions_router,
     prefix=f"{config.API_PREFIX}/submissions",
     tags=["submissions"],
+)
+app.include_router(
+    objects_router,
+    prefix=f"{config.API_PREFIX}/objects",
+    tags=["objects"],
 )
 app.include_router(
     users_router,

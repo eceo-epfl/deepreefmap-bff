@@ -11,39 +11,24 @@ from fastapi import File, UploadFile
 router = APIRouter()
 
 
-@router.get("/kubernetes/jobs")
-async def get_jobs(
+@router.get("/{object_id}")
+async def get_object(
     client: httpx.AsyncClient = Depends(get_async_client),
     *,
+    object_id: UUID,
     user: User = Depends(get_user_info),
 ) -> Any:
-    """Get all kubernetes jobs in the namespace"""
+    """Get a object by id"""
 
     res = await client.get(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/kubernetes/jobs",
-    )
-
-    return res.json()
-
-
-@router.get("/{submission_id}")
-async def get_submission(
-    client: httpx.AsyncClient = Depends(get_async_client),
-    *,
-    submission_id: UUID,
-    user: User = Depends(get_user_info),
-) -> Any:
-    """Get a submission by id"""
-
-    res = await client.get(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}",
+        f"{config.DEEPREEFMAP_API_URL}/v1/objects/{object_id}",
     )
 
     return res.json()
 
 
 @router.get("")
-async def get_submissions(
+async def get_objects(
     response: Response,
     *,
     filter: str = Query(None),
@@ -52,10 +37,10 @@ async def get_submissions(
     client: httpx.AsyncClient = Depends(get_async_client),
     user: User = Depends(get_user_info),
 ) -> Any:
-    """Get all submissions"""
+    """Get all objects"""
 
     res = await client.get(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions",
+        f"{config.DEEPREEFMAP_API_URL}/v1/objects",
         params={"sort": sort, "range": range, "filter": filter},
     )
     response.headers["Access-Control-Expose-Headers"] = "Content-Range"
@@ -65,50 +50,55 @@ async def get_submissions(
 
 
 @router.post("")
-async def create_submission(
-    submission: Any = Body(...),
+async def create_object(
+    file: UploadFile = File(...),
+    *,
     client: httpx.AsyncClient = Depends(get_async_client),
     admin_user: User = Depends(require_admin),
 ) -> Any:
-    """Creates an submission
+    """Creates an object
 
-    Creates a new submission with the given files
+    Forwards the file to the API with multipart form data encoding
     """
 
+    file_streams = []
+    file_streams.append(("file", (file.filename, file.file)))
+
     res = await client.post(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions",
-        json=submission,
+        f"{config.DEEPREEFMAP_API_URL}/v1/objects/inputs",
+        files=file_streams,
+        timeout=None,
     )
     return res.json()
 
 
-@router.put("/{submission_id}")
-async def update_submission(
-    submission_id: UUID,
-    submission: Any = Body(...),
+@router.put("/{object_id}")
+async def update_object(
+    object_id: UUID,
+    object: Any = Body(...),
     client: httpx.AsyncClient = Depends(get_async_client),
     admin_user: User = Depends(require_admin),
 ) -> Any:
-    """ "Updates an submission by id"""
+    """ "Updates an object by id"""
 
     res = await client.put(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}",
-        json=submission,
+        f"{config.DEEPREEFMAP_API_URL}/v1/objects/{object_id}",
+        json=object,
     )
 
     return res.json()
 
 
-@router.delete("/{submission_id}")
-async def delete_submission(
-    submission_id: UUID,
+@router.delete("/{object_id}")
+async def delete_object(
+    object_id: UUID,
     client: httpx.AsyncClient = Depends(get_async_client),
     admin_user: User = Depends(require_admin),
 ) -> None:
-    """Delete an submission by id"""
+    """Delete an object by id"""
 
     res = await client.delete(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}"
+        f"{config.DEEPREEFMAP_API_URL}/v1/objects/{object_id}"
     )
 
     return res.json()
