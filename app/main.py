@@ -6,6 +6,7 @@ from app.models.health import HealthCheck
 from app.submissions import router as submissions_router
 from app.users import router as users_router
 from app.objects import router as objects_router
+from app.submission_job_logs import router as submission_job_logs_router
 
 app = FastAPI()
 
@@ -60,4 +61,9 @@ app.include_router(
     users_router,
     prefix=f"{config.API_PREFIX}/users",
     tags=["users"],
+)
+app.include_router(
+    submission_job_logs_router,
+    prefix=f"{config.API_PREFIX}/submission_job_logs",
+    tags=["submissions", "logs"],
 )

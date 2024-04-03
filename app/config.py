@@ -19,6 +19,9 @@ class Config(BaseSettings):
     # ECEO-API settings
     DEEPREEFMAP_API_URL: str  # Path to API (eg: http://deepreefmap-api-dev)
 
+    SERIALIZER_SECRET_KEY: str
+    SERIALIZER_EXPIRY_HOURS: int = 6
+
 
 @lru_cache()
 def get_config():
