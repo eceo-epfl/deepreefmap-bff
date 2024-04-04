@@ -98,14 +98,16 @@ async def get_submission_output_file_token(
     client: httpx.AsyncClient = Depends(get_async_client),
     *,
     submission_id: UUID,
-    # user: User = Depends(get_user_info),
+    user: User = Depends(get_user_info),
     filename: str,
     background_tasks: BackgroundTasks,
 ) -> DownloadToken:
     """With the given ID and filename, returns a token to download the file
 
-    Necessary to encode into JWT to allow the user to download the file
-    from an open endpoint but first by authenticating
+    Necessary endpoint to allow the user to download the file but also
+    providing some security by forcing authentication first.
+
+    Token expires at a set time defined by config.SERIALIZER_EXPIRY_HOURS
     """
 
     payload = {
