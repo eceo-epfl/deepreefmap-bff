@@ -15,6 +15,7 @@ python-keycloak = "^3.7.0"
 fastapi-keycloak = "^1.0.10"
 python-multipart = "^0.0.9"
 pyjwt = "^2.8.0"
+streaming-form-data = "^1.15.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
