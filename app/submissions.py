@@ -30,6 +30,22 @@ async def get_jobs(
     return res.json()
 
 
+@router.delete("/kubernetes/jobs/{job_id}")
+async def delete_job(
+    job_id: str,
+    client: httpx.AsyncClient = Depends(get_async_client),
+    *,
+    user: User = Depends(require_admin),
+) -> Any:
+    """Delete a kubernetes job by ID"""
+
+    res = await client.delete(
+        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/kubernetes/jobs/{job_id}",
+    )
+
+    return res.json()
+
+
 @router.get("/download/{token}", response_class=StreamingResponse)
 async def get_submission_output_file(
     client: httpx.AsyncClient = Depends(get_async_client),
