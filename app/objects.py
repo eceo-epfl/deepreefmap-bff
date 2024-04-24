@@ -8,20 +8,13 @@ from uuid import UUID
 from app.models.user import User
 from app.auth import require_admin, get_user_info
 from fastapi import (
-    UploadFile,
     Header,
     HTTPException,
     Request,
-    File,
     status,
 )
-from streaming_form_data import StreamingFormDataParser
-from streaming_form_data.targets import FileTarget, ValueTarget
-from streaming_form_data.validators import MaxSizeValidator
-from starlette.requests import ClientDisconnect
 from starlette.background import BackgroundTask
-import streaming_form_data
-import os
+from fastapi.responses import PlainTextResponse
 
 
 router = APIRouter()
@@ -46,7 +39,7 @@ class MaxBodySizeValidator:
             raise MaxBodySizeException(body_len=self.body_len)
 
 
-@router.post("/upload")
+@router.post("", response_class=PlainTextResponse)
 async def upload_file(
     upload_length: str = Header(..., alias="Upload-Length"),
     content_type: str = Header(..., alias="Content-Type"),
@@ -56,7 +49,7 @@ async def upload_file(
 ) -> Any:
     try:
         res = await client.post(
-            f"{config.DEEPREEFMAP_API_URL}/v1/objects/upload",
+            f"{config.DEEPREEFMAP_API_URL}/v1/objects",
             headers={
                 "Upload-Length": upload_length,
                 "Content-Type": content_type,
@@ -72,7 +65,7 @@ async def upload_file(
     return res.json()
 
 
-@router.patch("/upload")
+@router.patch("")
 async def upload_chunk(
     request: Request,
     patch: str = Query(...),
@@ -86,11 +79,12 @@ async def upload_chunk(
     """
     try:
 
-        URL = f"{config.DEEPREEFMAP_API_URL}/v1/objects/upload?patch={patch}"
+        URL = f"{config.DEEPREEFMAP_API_URL}/v1/objects?patch={patch}"
         req = client.build_request(
             "PATCH",
             URL,
             headers=request.headers.raw,
+            timeout=None,
             content=request.stream(),
         )
         r = await client.send(req, stream=True)
@@ -108,44 +102,16 @@ async def upload_chunk(
         )
 
 
-@router.head("/upload")
+@router.head("")
 async def check_uploaded_chunks(
     request: Request,
     patch: str = Query(...),
     client: httpx.AsyncClient = Depends(get_async_client),
 ):
     try:
-        URL = f"{config.DEEPREEFMAP_API_URL}/v1/objects/upload?patch={patch}"
+        URL = f"{config.DEEPREEFMAP_API_URL}/v1/objects?patch={patch}"
         req = client.build_request(
             "HEAD",
-            URL,
-            headers=request.headers.raw,
-            content=request.stream(),
-        )
-        r = await client.send(req, stream=True)
-        return StreamingResponse(
-            r.aiter_raw(),
-            status_code=r.status_code,
-            headers=r.headers,
-            background=BackgroundTask(r.aclose),
-        )
-
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=e.response.text,
-        )
-
-
-@router.delete("/upload")
-async def delete_upload(
-    request: Request,
-    client: httpx.AsyncClient = Depends(get_async_client),
-):
-    try:
-        URL = f"{config.DEEPREEFMAP_API_URL}/v1/objects/upload"
-        req = client.build_request(
-            "DELETE",
             URL,
             headers=request.headers.raw,
             content=request.stream(),
@@ -203,26 +169,18 @@ async def get_objects(
     return res.json()
 
 
-@router.post("")
-async def create_object(
-    file: UploadFile = File(...),
-    *,
+@router.post("/{object_id}")
+async def regenerate_statistics(
+    object_id: UUID,
     client: httpx.AsyncClient = Depends(get_async_client),
     admin_user: User = Depends(require_admin),
 ) -> Any:
-    """Creates an object
-
-    Forwards the file to the API with multipart form data encoding
-    """
-
-    file_streams = []
-    file_streams.append(("file", (file.filename, file.file)))
+    """Regenerates the video statistics for the object"""
 
     res = await client.post(
-        f"{config.DEEPREEFMAP_API_URL}/v1/objects/inputs",
-        files=file_streams,
-        timeout=None,
+        f"{config.DEEPREEFMAP_API_URL}/v1/objects/{object_id}"
     )
+
     return res.json()
 
 

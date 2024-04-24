@@ -7,9 +7,8 @@ from uuid import UUID
 from app.models.user import User
 from app.models.token import DownloadToken
 from app.auth import require_admin, get_user_info
-from fastapi import File, UploadFile, BackgroundTasks
+from fastapi import BackgroundTasks
 from fastapi.responses import StreamingResponse
-from itsdangerous import URLSafeSerializer
 import jwt
 import datetime
 
