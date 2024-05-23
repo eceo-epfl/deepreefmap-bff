@@ -7,8 +7,10 @@ from app.submissions import router as submissions_router
 from app.users import router as users_router
 from app.objects import router as objects_router
 from app.submission_job_logs import router as submission_job_logs_router
+from app.transects import router as transects_router
+from app.utils import lifespan
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 
 origins = ["*"]
@@ -66,4 +68,9 @@ app.include_router(
     submission_job_logs_router,
     prefix=f"{config.API_PREFIX}/submission_job_logs",
     tags=["submissions", "logs"],
+)
+app.include_router(
+    transects_router,
+    prefix=f"{config.API_PREFIX}/transects",
+    tags=["transects"],
 )

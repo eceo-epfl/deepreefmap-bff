@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+import httpx
 
 
 class Config(BaseSettings):
@@ -21,6 +22,14 @@ class Config(BaseSettings):
 
     SERIALIZER_SECRET_KEY: str
     SERIALIZER_EXPIRY_HOURS: int = 6
+
+    TIMEOUT: httpx.Timeout = httpx.Timeout(
+        5.0,
+        connect=2.0,
+    )
+    LIMITS: httpx.Limits = httpx.Limits(
+        max_connections=500, max_keepalive_connections=50
+    )
 
 
 @lru_cache()
