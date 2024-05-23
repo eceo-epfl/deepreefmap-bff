@@ -31,18 +31,25 @@ async def lifespan(app: FastAPI):
 
 async def _reverse_proxy(
     request: Request,
+    user: User = Depends(get_user_info),
 ):
     client = request.state.client
-
     path = request.url.path.replace("/api", "/v1")
     url = httpx.URL(
         path=path,
         query=request.url.query.encode("utf-8"),
     )
+    headers = {
+        key.decode(): value.decode() for key, value in request.headers.raw
+    }
+    headers.update(  # Add user ID and roles to the headers
+        {"User-ID": user.id, "User-Roles": ",".join(user.realm_roles)}
+    )
+
     req = client.build_request(
         request.method,
         url,
-        headers=request.headers.raw,
+        headers=headers,
         content=request.stream(),
     )
     r = await client.send(req, stream=True)

@@ -1,7 +1,7 @@
 from typing import Any
 from fastapi import Depends, APIRouter, Query, Response, Body, HTTPException
 from app.config import config
-from app.utils import get_async_client
+from app.utils import get_async_client, _reverse_proxy
 import httpx
 from uuid import UUID
 from app.models.user import User
@@ -94,18 +94,12 @@ async def get_submission_output_file(
 
 @router.get("/{submission_id}")
 async def get_submission(
-    client: httpx.AsyncClient = Depends(get_async_client),
-    *,
     submission_id: UUID,
-    user: User = Depends(get_user_info),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """Get a submission by id"""
 
-    res = await client.get(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}",
-    )
-
-    return res.json()
+    return reverse_proxy
 
 
 @router.get("/{submission_id}/{filename}", response_model=DownloadToken)
@@ -155,71 +149,40 @@ async def execute_submission(
 
 @router.get("")
 async def get_submissions(
-    response: Response,
-    *,
-    filter: str = Query(None),
-    sort: str = Query(None),
-    range: str = Query(None),
-    client: httpx.AsyncClient = Depends(get_async_client),
-    user: User = Depends(get_user_info),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """Get all submissions"""
 
-    res = await client.get(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions",
-        params={"sort": sort, "range": range, "filter": filter},
-    )
-    response.headers["Access-Control-Expose-Headers"] = "Content-Range"
-    response.headers["Content-Range"] = res.headers["Content-Range"]
-
-    return res.json()
+    return reverse_proxy
 
 
 @router.post("")
 async def create_submission(
-    submission: Any = Body(...),
-    client: httpx.AsyncClient = Depends(get_async_client),
-    admin_user: User = Depends(require_admin),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """Creates an submission
 
     Creates a new submission with the given files
     """
 
-    res = await client.post(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions",
-        json=submission,
-    )
-    return res.json()
+    return reverse_proxy
 
 
 @router.put("/{submission_id}")
 async def update_submission(
     submission_id: UUID,
-    submission: Any = Body(...),
-    client: httpx.AsyncClient = Depends(get_async_client),
-    admin_user: User = Depends(require_admin),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """ "Updates an submission by id"""
 
-    res = await client.put(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}",
-        json=submission,
-    )
-
-    return res.json()
+    return reverse_proxy
 
 
 @router.delete("/{submission_id}")
 async def delete_submission(
     submission_id: UUID,
-    client: httpx.AsyncClient = Depends(get_async_client),
-    admin_user: User = Depends(require_admin),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> None:
     """Delete an submission by id"""
 
-    res = await client.delete(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}"
-    )
-
-    return res.json()
+    return reverse_proxy

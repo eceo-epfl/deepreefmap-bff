@@ -2,7 +2,7 @@ from typing import Any
 from fastapi import Depends, APIRouter, Query, Response, Body
 from fastapi.responses import StreamingResponse
 from app.config import config
-from app.utils import get_async_client
+from app.utils import get_async_client, _reverse_proxy
 import httpx
 from uuid import UUID
 from app.models.user import User
@@ -133,40 +133,21 @@ async def check_uploaded_chunks(
 
 @router.get("/{object_id}")
 async def get_object(
-    client: httpx.AsyncClient = Depends(get_async_client),
-    *,
     object_id: UUID,
-    user: User = Depends(get_user_info),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """Get a object by id"""
 
-    res = await client.get(
-        f"{config.DEEPREEFMAP_API_URL}/v1/objects/{object_id}",
-    )
-
-    return res.json()
+    return reverse_proxy
 
 
 @router.get("")
 async def get_objects(
-    response: Response,
-    *,
-    filter: str = Query(None),
-    sort: str = Query(None),
-    range: str = Query(None),
-    client: httpx.AsyncClient = Depends(get_async_client),
-    user: User = Depends(get_user_info),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """Get all objects"""
 
-    res = await client.get(
-        f"{config.DEEPREEFMAP_API_URL}/v1/objects",
-        params={"sort": sort, "range": range, "filter": filter},
-    )
-    response.headers["Access-Control-Expose-Headers"] = "Content-Range"
-    response.headers["Content-Range"] = res.headers["Content-Range"]
-
-    return res.json()
+    return reverse_proxy
 
 
 @router.post("/{object_id}")
@@ -187,30 +168,18 @@ async def regenerate_statistics(
 @router.put("/{object_id}")
 async def update_object(
     object_id: UUID,
-    object: Any = Body(...),
-    client: httpx.AsyncClient = Depends(get_async_client),
-    admin_user: User = Depends(require_admin),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """ "Updates an object by id"""
 
-    res = await client.put(
-        f"{config.DEEPREEFMAP_API_URL}/v1/objects/{object_id}",
-        json=object,
-    )
-
-    return res.json()
+    return reverse_proxy
 
 
 @router.delete("/{object_id}")
 async def delete_object(
     object_id: UUID,
-    client: httpx.AsyncClient = Depends(get_async_client),
-    admin_user: User = Depends(require_admin),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> None:
     """Delete an object by id"""
 
-    res = await client.delete(
-        f"{config.DEEPREEFMAP_API_URL}/v1/objects/{object_id}"
-    )
-
-    return res.json()
+    return reverse_proxy

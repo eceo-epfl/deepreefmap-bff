@@ -53,7 +53,7 @@ async def get_payload(token: str = Security(oauth2_scheme)) -> dict:
 # Get user infos from the payload
 async def get_user_info(payload: dict = Depends(get_payload)) -> User:
     try:
-        return User(
+        user = User(
             id=payload.get("sub"),
             username=payload.get("preferred_username"),
             email=payload.get("email"),
@@ -62,6 +62,7 @@ async def get_user_info(payload: dict = Depends(get_payload)) -> User:
             realm_roles=payload.get("realm_access", {}).get("roles", []),
             client_roles=payload.get("realm_access", {}).get("roles", []),
         )
+        return user
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
