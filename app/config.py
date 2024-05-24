@@ -31,6 +31,8 @@ class Config(BaseSettings):
         max_connections=500, max_keepalive_connections=50
     )
 
+    VALID_ROLES: list[str] = ["admin", "user"]
+
 
 @lru_cache()
 def get_config():

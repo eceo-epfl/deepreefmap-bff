@@ -41,28 +41,11 @@ class MaxBodySizeValidator:
 
 @router.post("", response_class=PlainTextResponse)
 async def upload_file(
-    upload_length: str = Header(..., alias="Upload-Length"),
-    content_type: str = Header(..., alias="Content-Type"),
-    *,
-    client: httpx.AsyncClient = Depends(get_async_client),
-    user: User = Depends(get_user_info),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
-    try:
-        res = await client.post(
-            f"{config.DEEPREEFMAP_API_URL}/v1/objects",
-            headers={
-                "Upload-Length": upload_length,
-                "Content-Type": content_type,
-            },
-        )
-        res.raise_for_status()
+    """Creates an object"""
 
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=e.response.text,
-        )
-    return res.json()
+    return reverse_proxy
 
 
 @router.patch("")

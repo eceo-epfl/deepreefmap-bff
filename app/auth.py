@@ -33,15 +33,7 @@ async def get_idp_public_key():
 # Get the payload/token from keycloak
 async def get_payload(token: str = Security(oauth2_scheme)) -> dict:
     try:
-        return keycloak_openid.decode_token(
-            token,
-            key=await get_idp_public_key(),
-            options={
-                "verify_signature": True,
-                "verify_aud": False,
-                "exp": True,
-            },
-        )
+        return keycloak_openid.decode_token(token)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

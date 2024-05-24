@@ -6,16 +6,16 @@ authors = ["Evan Thomas <evan.thomas@epfl.ch>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 fastapi = "^0.104.1"
 uvicorn = "^0.23.2"
 pydantic-settings = "^2.0.3"
 httpx = "^0.25.1"
-python-keycloak = "^3.7.0"
+python-keycloak = "^4.0.0"
 fastapi-keycloak = "^1.0.10"
 python-multipart = "^0.0.9"
 pyjwt = "^2.8.0"
-streaming-form-data = "^1.15.0"
+#streaming-form-data = "^1.15.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

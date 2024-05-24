@@ -1,18 +1,25 @@
 from typing import Any
-from fastapi import Depends, APIRouter, Query, Response, Body, Security
+from fastapi import Depends, APIRouter, Query, Response
 from app.config import config
-from app.utils import get_async_client
-import httpx
 from uuid import UUID
 from app.models.user import User
-from app.auth import require_admin, get_user_info
+from app.auth import require_admin
 from keycloak import KeycloakAdmin, KeycloakOpenIDConnection
-from app.auth import oauth2_scheme, get_payload
 from pydantic import BaseModel
+from enum import Enum
 import json
 
 
 router = APIRouter()
+
+
+class UserRoles(str, Enum):
+    admin = "admin"
+    user = "user"
+
+
+class UserUpdate(BaseModel):
+    role: UserRoles
 
 
 def get_keycloak_admin():
@@ -26,16 +33,72 @@ def get_keycloak_admin():
     return KeycloakAdmin(connection=keycloak_connection)
 
 
-@router.get("")
+class KeycloakUser(BaseModel):
+    username: str | None
+    firstName: str | None
+    lastName: str | None
+    email: str | None
+    id: str | None
+    admin: bool | None
+    loginMethod: str | None
+    roles: list[dict[str, str]] | None = []
+
+
+def get_user(
+    user_id: str,
+    keycloak_admin: KeycloakAdmin,
+) -> KeycloakUser:
+
+    user = keycloak_admin.get_user(user_id)
+
+    admin_status = keycloak_admin.get_realm_role_members("admin")
+    admin = False
+    for admin_user in admin_status:
+        if admin_user["username"] == user["username"]:
+            admin = True
+            break
+
+    # Get all roles foe the user
+    roles = keycloak_admin.get_realm_roles_of_user(user_id=user_id)
+
+    # Only include valid roles
+    roles = [role for role in roles if role["name"] in config.VALID_ROLES]
+
+    return KeycloakUser(
+        email=user.get("email"),
+        username=user.get("username"),
+        id=user.get("id"),
+        firstName=user.get("firstName"),
+        lastName=user.get("lastName"),
+        admin=admin,
+        loginMethod=(
+            user.get("attributes", {}).get("login-method", ["EPFL"])[0].upper()
+        ),
+        roles=[{"name": role["name"]} for role in roles] if roles else None,
+    )
+
+
+@router.get("/{user_id}", response_model=KeycloakUser)
+async def get_one_user(
+    user_id: str,
+    keycloak_admin: KeycloakAdmin = Depends(get_keycloak_admin),
+    user: User = Depends(require_admin),
+) -> KeycloakUser:
+    """Get a user by id"""
+
+    return get_user(user_id, keycloak_admin)
+
+
+@router.get("", response_model=list[KeycloakUser])
 async def get_users(
     response: Response,
     user: User = Depends(require_admin),
-    keycloak_admin=Depends(get_keycloak_admin),
+    keycloak: KeycloakAdmin = Depends(get_keycloak_admin),
     *,
     filter: str = Query(None),
     sort: str = Query(None),
     range: str = Query(None),
-) -> Any:
+) -> list[KeycloakUser]:
     """Get a list of users
 
     This endpoint is used to get a list of users from Keycloak. It is used
@@ -50,8 +113,8 @@ async def get_users(
     filter = json.loads(filter) if filter else {}
 
     # Get admin role users
-    admin_users = keycloak_admin.get_realm_role_members("admin")
-
+    admin_users = keycloak.get_realm_role_members("admin")
+    print(admin_users)
     for admin_user in admin_users:
         admin_user["admin"] = True
 
@@ -67,7 +130,7 @@ async def get_users(
     if "username" in filter:
         query["username"] = filter["username"]
 
-    users = keycloak_admin.get_users(query=query)
+    users = keycloak.get_users(query=query)
 
     for admin_user in users:
         if admin_user["username"] in [u["username"] for u in admin_users]:
@@ -86,40 +149,65 @@ async def get_users(
 
     response.headers["Content-Range"] = f"users {start}-{end}/{len(users)}"
 
-    return users[start : end + 1]
+    user_objs = [
+        KeycloakUser(
+            email=user.get("email"),
+            username=user.get("username"),
+            id=user.get("id"),
+            firstName=user.get("firstName"),
+            lastName=user.get("lastName"),
+            admin=user.get("admin"),
+            loginMethod=user.get("attributes", {})
+            .get("login-method", ["EPFL"])[0]
+            .upper(),
+        )
+        for user in users[start : end + 1]
+    ]
 
-
-class UserUpdate(BaseModel):
-    admin: bool
+    return user_objs
 
 
 @router.put("/{user_id}")
 async def update_user(
-    user_id: str,
+    user_id: UUID,
     user_update: UserUpdate,
     keycloak_admin: KeycloakAdmin = Depends(get_keycloak_admin),
     user: User = Depends(require_admin),
 ) -> Any:
     """Updates the role of the user"""
 
-    # Get roles
-    realm_roles = keycloak_admin.get_realm_roles(search_text="admin")
+    # Everything here works in list, although we only have one role, let's
+    # keep it that way for future-proofing
+    roles_to_assign = [user_update.role.value]
 
-    if len(realm_roles) == 0:
-        raise Exception("No admin role found")
-    if len(realm_roles) > 1:
-        raise Exception("Multiple admin roles found")
-    admin_realm_role = realm_roles[0]
+    # Get the role objects from keycloak
+    realm_roles = keycloak_admin.get_realm_roles(["admin", "user"])
+    roles = [role for role in realm_roles if role["name"] in roles_to_assign]
+    current_userroles = keycloak_admin.get_realm_roles_of_user(user_id=user_id)
 
-    if user_update.admin:
-        keycloak_admin.assign_realm_roles(
-            user_id=user_id,
-            roles=admin_realm_role,
-        )
-    else:
-        keycloak_admin.delete_realm_roles_of_user(
-            user_id=user_id,
-            roles=admin_realm_role,
-        )
+    roles_to_add = []
+    roles_to_delete = []
 
-    return keycloak_admin.get_user(user_id)
+    for role in roles:
+        for userrole in current_userroles:
+            if role["id"] == userrole["id"]:
+                break
+        else:
+            roles_to_add.append(role)
+
+    for userrole in current_userroles:
+        for role in roles:
+            if role["id"] == userrole["id"]:
+                break
+        else:
+            roles_to_delete.append(userrole)
+
+    keycloak_admin.assign_realm_roles(
+        user_id=user_id,
+        roles=roles_to_add,
+    )
+    keycloak_admin.delete_realm_roles_of_user(
+        user_id=user_id,
+        roles=roles_to_delete,
+    )
+    return get_user(user_id, keycloak_admin)
