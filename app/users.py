@@ -39,9 +39,9 @@ class KeycloakUser(BaseModel):
     lastName: str | None
     email: str | None
     id: str | None
-    admin: bool | None
     loginMethod: str | None
-    roles: list[dict[str, str]] | None = []
+    admin: bool | None
+    approved_user: bool | None = False
 
 
 def get_user(
@@ -51,18 +51,9 @@ def get_user(
 
     user = keycloak_admin.get_user(user_id)
 
-    admin_status = keycloak_admin.get_realm_role_members("admin")
-    admin = False
-    for admin_user in admin_status:
-        if admin_user["username"] == user["username"]:
-            admin = True
-            break
-
-    # Get all roles foe the user
     roles = keycloak_admin.get_realm_roles_of_user(user_id=user_id)
-
-    # Only include valid roles
-    roles = [role for role in roles if role["name"] in config.VALID_ROLES]
+    admin = any(role["name"] == "admin" for role in roles)
+    approved_user = any(role["name"] == "user" for role in roles) or admin
 
     return KeycloakUser(
         email=user.get("email"),
@@ -71,10 +62,10 @@ def get_user(
         firstName=user.get("firstName"),
         lastName=user.get("lastName"),
         admin=admin,
+        approved_user=approved_user,
         loginMethod=(
             user.get("attributes", {}).get("login-method", ["EPFL"])[0].upper()
         ),
-        roles=[{"name": role["name"]} for role in roles] if roles else None,
     )
 
 
@@ -112,35 +103,32 @@ async def get_users(
     range = json.loads(range) if range else []
     filter = json.loads(filter) if filter else {}
 
-    # Get admin role users
+    # Return only current users, to reduce load on Keycloak
     admin_users = keycloak.get_realm_role_members("admin")
-    print(admin_users)
-    for admin_user in admin_users:
-        admin_user["admin"] = True
+    general_users = keycloak.get_realm_role_members("user")
 
-    query = {"first": range[0], "max": range[1] - range[0] + 1}
+    user_dict = {}
 
-    # Manage the filter if there is one
+    for user in general_users:
+        user_dict[user["id"]] = user
+        user_dict[user["id"]]["admin"] = False
+        user_dict[user["id"]]["approved_user"] = True
 
-    # If admin is False, then handle general users in Keycloak
-    # Username filtering is only supported when admin is False, only
-    # because we assume the list for admins is much smaller and we can
-    # avoid querying the entire user list (all of EPFL LDAP in this case)
-    # if "admin" in filter and filter["admin"] is False:
-    if "username" in filter:
-        query["username"] = filter["username"]
+    for user in admin_users:
+        user_dict[user["id"]] = user
+        user_dict[user["id"]]["admin"] = True
+        user_dict[user["id"]]["approved_user"] = True
 
-    users = keycloak.get_users(query=query)
+    if "users_only" in filter and filter["users_only"] is True:
+        users = list(user_dict.values())
+    else:
+        # Return all users and match them with the current user list
+        query = {"first": range[0], "max": range[1] - range[0] + 1}
 
-    for admin_user in users:
-        if admin_user["username"] in [u["username"] for u in admin_users]:
-            admin_user["admin"] = True
-        else:
-            admin_user["admin"] = False
+        if "username" in filter:
+            query["username"] = filter["username"]
 
-    if "admin" in filter and filter["admin"] is True:
-        # Otherwise, return only the admin users
-        users = admin_users
+        users = keycloak.get_users(query=query)
 
     if len(range) == 2:
         start, end = range
@@ -149,20 +137,27 @@ async def get_users(
 
     response.headers["Content-Range"] = f"users {start}-{end}/{len(users)}"
 
-    user_objs = [
-        KeycloakUser(
-            email=user.get("email"),
-            username=user.get("username"),
-            id=user.get("id"),
-            firstName=user.get("firstName"),
-            lastName=user.get("lastName"),
-            admin=user.get("admin"),
-            loginMethod=user.get("attributes", {})
-            .get("login-method", ["EPFL"])[0]
-            .upper(),
+    user_objs = []
+    for user in users[start : end + 1]:
+        approved = False
+        admin = False
+        if user.get("id") in user_dict:
+            approved = user_dict[user["id"]].get("approved_user", False)
+            admin = user_dict[user["id"]].get("admin", False)
+        user_objs.append(
+            KeycloakUser(
+                email=user.get("email"),
+                username=user.get("username"),
+                id=user.get("id"),
+                firstName=user.get("firstName"),
+                lastName=user.get("lastName"),
+                admin=admin,
+                approved_user=approved,
+                loginMethod=user.get("attributes", {})
+                .get("login-method", ["EPFL"])[0]
+                .upper(),
+            )
         )
-        for user in users[start : end + 1]
-    ]
 
     return user_objs
 
@@ -187,18 +182,18 @@ async def update_user(
 
     roles_to_add = []
     roles_to_delete = []
-
     for role in roles:
         for userrole in current_userroles:
+            print("USERROLE", userrole)
             if role["id"] == userrole["id"]:
-                break
+                continue
         else:
             roles_to_add.append(role)
 
     for userrole in current_userroles:
         for role in roles:
             if role["id"] == userrole["id"]:
-                break
+                continue
         else:
             roles_to_delete.append(userrole)
 

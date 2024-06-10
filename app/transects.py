@@ -3,7 +3,7 @@ from fastapi import Depends, APIRouter
 from app.utils import _reverse_proxy
 from uuid import UUID
 from app.models.user import User
-from app.auth import require_admin
+from app.auth import get_user_info
 
 
 router = APIRouter()
@@ -13,7 +13,7 @@ router = APIRouter()
 async def get_transect(
     transect_id: UUID,
     reverse_proxy: Any = Depends(_reverse_proxy),
-    user: User = Depends(require_admin),
+    user: User = Depends(get_user_info),
 ) -> Any:
     """Get a transect by id"""
 
@@ -23,7 +23,7 @@ async def get_transect(
 @router.get("")
 async def get_transects(
     reverse_proxy: Any = Depends(_reverse_proxy),
-    user: User = Depends(require_admin),
+    user: User = Depends(get_user_info),
 ) -> Any:
     """Get all transects"""
 
@@ -33,7 +33,7 @@ async def get_transects(
 @router.post("")
 async def create_transect(
     reverse_proxy: Any = Depends(_reverse_proxy),
-    user: User = Depends(require_admin),
+    user: User = Depends(get_user_info),
 ) -> Any:
     """Creates a transect"""
 
@@ -43,7 +43,7 @@ async def create_transect(
 @router.post("/batch")
 async def create_plot_batch(
     reverse_proxy: Any = Depends(_reverse_proxy),
-    user: User = Depends(require_admin),
+    user: User = Depends(get_user_info),
 ) -> Any:
     """Creates plots from a batch import"""
 
@@ -54,7 +54,7 @@ async def create_plot_batch(
 async def update_transect(
     transect_id: UUID,
     reverse_proxy: Any = Depends(_reverse_proxy),
-    user: User = Depends(require_admin),
+    user: User = Depends(get_user_info),
 ) -> Any:
     """ "Updates a transects by id"""
 
@@ -65,7 +65,7 @@ async def update_transect(
 async def delete_transect(
     transect_id: UUID,
     reverse_proxy: Any = Depends(_reverse_proxy),
-    user: User = Depends(require_admin),
+    user: User = Depends(get_user_info),
 ) -> None:
     """Delete a transects by id"""
 
