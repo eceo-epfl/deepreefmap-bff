@@ -63,7 +63,9 @@ async def get_user_info(payload: dict = Depends(get_payload)) -> User:
         )
 
 
-async def require_admin(user: User = Depends(get_user_info)):
+async def require_admin(
+    user: User = Depends(get_user_info),
+) -> User:
     if "admin" not in user.realm_roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

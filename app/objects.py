@@ -1,19 +1,11 @@
 from typing import Any
-from fastapi import Depends, APIRouter, Query, Response, Body
-from fastapi.responses import StreamingResponse
-from app.config import config
+from fastapi import Depends, APIRouter, Query
 from app.utils import get_async_client, _reverse_proxy
 import httpx
 from uuid import UUID
 from app.models.user import User
-from app.auth import require_admin, get_user_info
-from fastapi import (
-    Header,
-    HTTPException,
-    Request,
-    status,
-)
-from starlette.background import BackgroundTask
+from app.auth import get_user_info
+from fastapi import Request
 from fastapi.responses import PlainTextResponse
 
 
@@ -53,65 +45,25 @@ async def upload_chunk(
     request: Request,
     patch: str = Query(...),
     client: httpx.AsyncClient = Depends(get_async_client),
-    admin_user: User = Depends(require_admin),
+    user: User = Depends(get_user_info),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """Creates an object
 
     Forwards the file to the API with multipart form data encoding
 
     """
-    try:
 
-        URL = f"{config.DEEPREEFMAP_API_URL}/v1/objects?patch={patch}"
-        req = client.build_request(
-            "PATCH",
-            URL,
-            headers=request.headers.raw,
-            timeout=None,
-            content=request.stream(),
-        )
-        r = await client.send(req, stream=True)
-        return StreamingResponse(
-            r.aiter_raw(),
-            status_code=r.status_code,
-            headers=r.headers,
-            background=BackgroundTask(r.aclose),
-        )
-
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=e.response.text,
-        )
+    return reverse_proxy
 
 
 @router.head("")
 async def check_uploaded_chunks(
-    request: Request,
-    patch: str = Query(...),
-    client: httpx.AsyncClient = Depends(get_async_client),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ):
-    try:
-        URL = f"{config.DEEPREEFMAP_API_URL}/v1/objects?patch={patch}"
-        req = client.build_request(
-            "HEAD",
-            URL,
-            headers=request.headers.raw,
-            content=request.stream(),
-        )
-        r = await client.send(req, stream=True)
-        return StreamingResponse(
-            r.aiter_raw(),
-            status_code=r.status_code,
-            headers=r.headers,
-            background=BackgroundTask(r.aclose),
-        )
+    """Check the uploaded chunks"""
 
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=e.response.text,
-        )
+    return reverse_proxy
 
 
 @router.get("/{object_id}")
@@ -136,16 +88,12 @@ async def get_objects(
 @router.post("/{object_id}")
 async def regenerate_statistics(
     object_id: UUID,
-    client: httpx.AsyncClient = Depends(get_async_client),
-    admin_user: User = Depends(require_admin),
+    # client: httpx.AsyncClient = Depends(get_async_client),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """Regenerates the video statistics for the object"""
 
-    res = await client.post(
-        f"{config.DEEPREEFMAP_API_URL}/v1/objects/{object_id}"
-    )
-
-    return res.json()
+    return reverse_proxy
 
 
 @router.put("/{object_id}")

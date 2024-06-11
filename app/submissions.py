@@ -1,5 +1,5 @@
 from typing import Any
-from fastapi import Depends, APIRouter, Query, Response, Body, HTTPException
+from fastapi import Depends, APIRouter, Request, HTTPException
 from app.config import config
 from app.utils import get_async_client, _reverse_proxy
 import httpx
@@ -35,7 +35,7 @@ async def delete_job(
     job_id: str,
     client: httpx.AsyncClient = Depends(get_async_client),
     *,
-    user: User = Depends(require_admin),
+    user: User = Depends(get_user_info),
 ) -> Any:
     """Delete a kubernetes job by ID"""
 
@@ -67,7 +67,6 @@ async def get_submission_output_file(
     )
 
     submission_id, filename, exp = decoded.values()
-    print("EXP", exp, datetime.datetime.fromtimestamp(exp))
 
     if datetime.datetime.fromtimestamp(
         exp, tz=datetime.timezone.utc
@@ -104,6 +103,7 @@ async def get_submission(
 
 @router.get("/{submission_id}/{filename}", response_model=DownloadToken)
 async def get_submission_output_file_token(
+    request: Request,
     client: httpx.AsyncClient = Depends(get_async_client),
     *,
     submission_id: UUID,
@@ -118,6 +118,30 @@ async def get_submission_output_file_token(
 
     Token expires at a set time defined by config.SERIALIZER_EXPIRY_HOURS
     """
+
+    # Get the resource to validate that it exists and the user has access
+    is_admin = "admin" in user.realm_roles
+    headers = {
+        key.decode(): value.decode() for key, value in request.headers.raw
+    }
+    headers.update(  # Add user ID and roles to the headers
+        {
+            "User-ID": user.id,
+            "User-Is-Admin": str(is_admin),
+        }
+    )
+    req = client.build_request(
+        "GET",
+        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}",
+        headers=headers,
+    )
+    r = await client.send(req)
+
+    if r.status_code != 200:
+        raise HTTPException(
+            status_code=r.status_code,
+            detail=r.text,
+        )
 
     payload = {
         "submission_id": str(submission_id),
@@ -135,16 +159,11 @@ async def get_submission_output_file_token(
 @router.post("/{submission_id}/execute", response_model=Any)
 async def execute_submission(
     submission_id: UUID,
-    client: httpx.AsyncClient = Depends(get_async_client),
-    admin_user: User = Depends(require_admin),
+    reverse_proxy: Any = Depends(_reverse_proxy),
 ) -> Any:
     """Execute a submission by id"""
 
-    res = await client.post(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/{submission_id}/execute",
-    )
-
-    return res.json()
+    return reverse_proxy
 
 
 @router.get("")

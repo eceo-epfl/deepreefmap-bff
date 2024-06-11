@@ -39,11 +39,15 @@ async def _reverse_proxy(
         path=path,
         query=request.url.query.encode("utf-8"),
     )
+    is_admin = "admin" in user.realm_roles
     headers = {
         key.decode(): value.decode() for key, value in request.headers.raw
     }
     headers.update(  # Add user ID and roles to the headers
-        {"User-ID": user.id, "User-Roles": ",".join(user.realm_roles)}
+        {
+            "User-ID": user.id,
+            "User-Is-Admin": str(is_admin),
+        }
     )
 
     req = client.build_request(
