@@ -56,21 +56,22 @@ async def get_user_info(payload: dict = Depends(get_payload)) -> User:
             realm_roles=payload.get("realm_access", {}).get("roles", []),
             client_roles=payload.get("realm_access", {}).get("roles", []),
         )
-        if "user" not in user.realm_roles:
-            print(user.realm_roles)
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not authorised to perform this operation",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        return user
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),  # "Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # If neither 'user' or 'admin' in user.realm_roles, then user is not
+    # authorised to perform this operation
+    if not any(role in user.realm_roles for role in ["user", "admin"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorised to perform this operation",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
 
 
 async def require_admin(
