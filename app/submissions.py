@@ -15,21 +15,6 @@ import datetime
 router = APIRouter()
 
 
-@router.get("/kubernetes/jobs")
-async def get_jobs(
-    client: httpx.AsyncClient = Depends(get_async_client),
-    *,
-    user: User = Depends(get_user_info),
-) -> Any:
-    """Get all kubernetes jobs in the namespace"""
-
-    res = await client.get(
-        f"{config.DEEPREEFMAP_API_URL}/v1/submissions/kubernetes/jobs",
-    )
-
-    return res.json()
-
-
 @router.delete("/kubernetes/jobs/{job_id}")
 async def delete_job(
     job_id: str,

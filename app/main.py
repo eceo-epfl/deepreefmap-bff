@@ -8,6 +8,7 @@ from app.users import router as users_router
 from app.objects import router as objects_router
 from app.submission_job_logs import router as submission_job_logs_router
 from app.transects import router as transects_router
+from app.status import router as status_router
 from app.utils import lifespan
 
 app = FastAPI(lifespan=lifespan)
@@ -73,4 +74,9 @@ app.include_router(
     transects_router,
     prefix=f"{config.API_PREFIX}/transects",
     tags=["transects"],
+)
+app.include_router(
+    status_router,
+    prefix=f"{config.API_PREFIX}/status",
+    tags=["status"],
 )
