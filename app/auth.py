@@ -45,6 +45,8 @@ async def get_payload(token: str = Security(oauth2_scheme)) -> dict:
 # Get user infos from the payload
 async def get_user_info(payload: dict = Depends(get_payload)) -> User:
     try:
+        # TODO: Would be better to contain approved_user/is_admin logic here,
+        # rather than decoupling roles into booleans elsewhere in the code
         user = User(
             id=payload.get("sub"),
             username=payload.get("preferred_username"),
@@ -54,6 +56,14 @@ async def get_user_info(payload: dict = Depends(get_payload)) -> User:
             realm_roles=payload.get("realm_access", {}).get("roles", []),
             client_roles=payload.get("realm_access", {}).get("roles", []),
         )
+        if "user" not in user.realm_roles:
+            print(user.realm_roles)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not authorised to perform this operation",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         return user
     except Exception as e:
         raise HTTPException(

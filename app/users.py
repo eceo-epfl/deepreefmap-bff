@@ -184,7 +184,6 @@ async def update_user(
     roles_to_delete = []
     for role in roles:
         for userrole in current_userroles:
-            print("USERROLE", userrole)
             if role["id"] == userrole["id"]:
                 continue
         else:
@@ -201,6 +200,35 @@ async def update_user(
         user_id=user_id,
         roles=roles_to_add,
     )
+    keycloak_admin.delete_realm_roles_of_user(
+        user_id=user_id,
+        roles=roles_to_delete,
+    )
+    return get_user(user_id, keycloak_admin)
+
+
+@router.delete("/{user_id}")
+async def delete_user(
+    user_id: str,
+    keycloak_admin: KeycloakAdmin = Depends(get_keycloak_admin),
+    user: User = Depends(require_admin),
+) -> Any:
+    """Deleting a user removes them from the roles of 'admin' and 'user'
+
+    Removing these roles means they are now not an approved_user.
+    """
+
+    # Get the role objects from keycloak
+    realm_roles = keycloak_admin.get_realm_roles(["admin", "user"])
+    roles = [role for role in realm_roles if role["name"] in ["admin", "user"]]
+    current_userroles = keycloak_admin.get_realm_roles_of_user(user_id=user_id)
+
+    roles_to_delete = []
+    for userrole in current_userroles:
+        for role in roles:
+            if role["id"] == userrole["id"]:
+                roles_to_delete.append(userrole)
+
     keycloak_admin.delete_realm_roles_of_user(
         user_id=user_id,
         roles=roles_to_delete,
